@@ -91,6 +91,7 @@ GameObject:
   - component: {fileID: 438751774790016010}
   - component: {fileID: 438751774790016011}
   - component: {fileID: 7244839746909020219}
+  - component: {fileID: 1982727353080786677}
   m_Layer: 5
   m_Name: itemPrefabTask
   m_TagString: Untagged
@@ -179,6 +180,19 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &1982727353080786677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 438751774790016009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc0a5a164524f354e94efbf459932a67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 438751774790016008}
 --- !u!1 &438751775663273563
 GameObject:
   m_ObjectHideFlags: 0
@@ -299,7 +313,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 438751775663273564}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1982727353080786677}
+        m_TargetAssemblyTypeName: TaskParameters, Assembly-CSharp
+        m_MethodName: ChangUpdateParameters
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &438751775682888592
 GameObject:
   m_ObjectHideFlags: 0
