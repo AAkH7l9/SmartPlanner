@@ -10,8 +10,7 @@ public class ScrollViewAdapter : MonoBehaviour
 
     public void UpdateItems()
     {
-        int itemCount = 0;
-        StartCoroutine(GetItems(itemCount, results => OnRecevedItem(results)));
+        StartCoroutine(GetItems( results => OnRecevedItem(results)));
     }
 
     void OnRecevedItem (ItemListModel item)
@@ -29,7 +28,7 @@ public class ScrollViewAdapter : MonoBehaviour
         view.timeExecution.text = model.timeExecution;
     }
 
-    IEnumerator GetItems(int count, System.Action<ItemListModel> callback)
+    IEnumerator GetItems( System.Action<ItemListModel> callback)
     {
         yield return new WaitForSeconds(0);
         var results = new ItemListModel();
