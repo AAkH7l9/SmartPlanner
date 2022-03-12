@@ -3,41 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ScrollViewAdapter : MonoBehaviour
+public class AddingTasks : MonoBehaviour
 {
     public GameObject prefabTask;
-    public GameObject prefabDataInputTask;
     public RectTransform contentListTask;
-    public GameObject contentDatainput;
-    private bool click = false;
-    public InputField unputNameTask ;
-    private Text nameText;
 
-    public void ChangUpdateParameters()
+    public void AddingTask()
     {
-        if (!click)
-        {
-            contentDatainput.SetActive(true);
-            click = true;
-
-            StartCoroutine(GetItems(results => OnRecevedItem(results)));
-        }
-        else
-        {
-            contentDatainput.SetActive(false);
-            click = false;
-        }
+        StartCoroutine(GetItems(results => OnRecevedItem(results)));
     }
 
-    public void SetName()
+    void OnRecevedItem(ItemListModel item)
     {
-        nameText.text = unputNameTask.text;
-    }
-    void OnRecevedItem (ItemListModel item)
-    {
-            var instance = Instantiate(prefabTask.gameObject);
-            instance.transform.SetParent(contentListTask, false);
-            InitializeItemView(instance, item);
+        var instance = Instantiate(prefabTask.gameObject);
+        instance.transform.SetParent(contentListTask, false);
+        InitializeItemView(instance, item);
     }
 
     void InitializeItemView(GameObject viewGameObject, ItemListModel model)
@@ -48,11 +28,11 @@ public class ScrollViewAdapter : MonoBehaviour
         view.timeExecution.text = model.timeExecution;
     }
 
-    IEnumerator GetItems( System.Action<ItemListModel> callback)
+    IEnumerator GetItems(System.Action<ItemListModel> callback)
     {
         yield return new WaitForSeconds(0);
         var results = new ItemListModel();
-        results.title = "Задача";
+        results.title = PanelParametersTask.nameTaskText;
         results.deadline = "дедлайн";
         results.timeExecution = "время";
 
@@ -66,9 +46,9 @@ public class ScrollViewAdapter : MonoBehaviour
         public Text timeExecution;
         public Button Parameters;
 
-        public ItemListView (Transform rootView)
+        public ItemListView(Transform rootView)
         {
-            title = rootView.Find("title").GetComponent<Text>(); 
+            title = rootView.Find("title").GetComponent<Text>();
             deadline = rootView.Find("deadline").GetComponent<Text>();
             timeExecution = rootView.Find("executionTime").GetComponent<Text>();
         }
@@ -78,6 +58,7 @@ public class ScrollViewAdapter : MonoBehaviour
     {
         public string title;
         public string deadline;
-        public string timeExecution; 
+        public string timeExecution;
     }
 }
+
