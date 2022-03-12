@@ -5,19 +5,38 @@ using UnityEngine.UI;
 
 public class ScrollViewAdapter : MonoBehaviour
 {
-    public RectTransform prefab;
-    public RectTransform content;
+    public GameObject prefabTask;
+    public GameObject prefabDataInputTask;
+    public RectTransform contentListTask;
+    public GameObject contentDatainput;
+    private bool click = false;
+    public InputField unputNameTask ;
+    private Text nameText;
 
-    public void UpdateItems()
+    public void ChangUpdateParameters()
     {
-        int itemCount = 0;
-        StartCoroutine(GetItems(itemCount, results => OnRecevedItem(results)));
+        if (!click)
+        {
+            contentDatainput.SetActive(true);
+            click = true;
+
+            StartCoroutine(GetItems(results => OnRecevedItem(results)));
+        }
+        else
+        {
+            contentDatainput.SetActive(false);
+            click = false;
+        }
     }
 
+    public void SetName()
+    {
+        nameText.text = unputNameTask.text;
+    }
     void OnRecevedItem (ItemListModel item)
     {
-            var instance = GameObject.Instantiate(prefab.gameObject) as GameObject;
-            instance.transform.SetParent(content, false);
+            var instance = Instantiate(prefabTask.gameObject);
+            instance.transform.SetParent(contentListTask, false);
             InitializeItemView(instance, item);
     }
 
@@ -29,7 +48,7 @@ public class ScrollViewAdapter : MonoBehaviour
         view.timeExecution.text = model.timeExecution;
     }
 
-    IEnumerator GetItems(int count, System.Action<ItemListModel> callback)
+    IEnumerator GetItems( System.Action<ItemListModel> callback)
     {
         yield return new WaitForSeconds(0);
         var results = new ItemListModel();
@@ -52,7 +71,6 @@ public class ScrollViewAdapter : MonoBehaviour
             title = rootView.Find("title").GetComponent<Text>(); 
             deadline = rootView.Find("deadline").GetComponent<Text>();
             timeExecution = rootView.Find("executionTime").GetComponent<Text>();
-            Parameters = rootView.Find("parameters").GetComponent<Button>();
         }
     }
 
