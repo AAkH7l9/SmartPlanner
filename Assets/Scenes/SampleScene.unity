@@ -136,7 +136,6 @@ GameObject:
   - component: {fileID: 4526820}
   - component: {fileID: 4526819}
   - component: {fileID: 4526818}
-  - component: {fileID: 4526822}
   m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
@@ -241,20 +240,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4526816}
   m_CullTransparentMesh: 1
---- !u!114 &4526822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4526816}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbc92f0dea2f17c408b99ef18f7b30be, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  prefab: {fileID: 438751774790016008, guid: 7dafcc5f3fe70a94cbf8f64967ff2045, type: 3}
-  content: {fileID: 4526817}
 --- !u!1 &12304938
 GameObject:
   m_ObjectHideFlags: 0
@@ -303,12 +288,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 12304938}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc0a5a164524f354e94efbf459932a67, type: 3}
+  m_Script: {fileID: 11500000, guid: cbc92f0dea2f17c408b99ef18f7b30be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   prefabTask: {fileID: 438751774790016009, guid: 7dafcc5f3fe70a94cbf8f64967ff2045, type: 3}
   prefabDataInputTask: {fileID: 2302900979888114010, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
-  content: {fileID: 12304938}
+  contentListTask: {fileID: 4526817}
+  contentDatainput: {fileID: 12304938}
+  unputNameTask: {fileID: 0}
 --- !u!114 &12304941
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -361,6 +348,30 @@ PrefabInstance:
     - target: {fileID: 2302900979888114010, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5122564998414498030, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5689971985947125147, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5689971985947125147, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 12304940}
+    - target: {fileID: 5689971985947125147, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: InputData
+      objectReference: {fileID: 0}
+    - target: {fileID: 5689971985947125147, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: ScrollViewAdapter, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 5689971985947125147, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 9080734610452391349, guid: 1fe1f18badef0814aa8531ad1cdc9d5c, type: 3}
       propertyPath: m_Pivot.x
@@ -1264,18 +1275,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4526822}
-        m_TargetAssemblyTypeName: ScrollViewAdapter, Assembly-CSharp
-        m_MethodName: UpdateItems
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
       - m_Target: {fileID: 12304940}
         m_TargetAssemblyTypeName: TaskParameters, Assembly-CSharp
         m_MethodName: ChangUpdateParameters
