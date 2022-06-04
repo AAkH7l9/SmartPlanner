@@ -136,7 +136,6 @@ GameObject:
   - component: {fileID: 4526820}
   - component: {fileID: 4526819}
   - component: {fileID: 4526818}
-  - component: {fileID: 4526822}
   m_Layer: 5
   m_Name: Taskbar
   m_TagString: Untagged
