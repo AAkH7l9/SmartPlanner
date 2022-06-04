@@ -3,14 +3,48 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AddingTasks : MonoBehaviour
+public class PresenterMainScreen : MonoBehaviour
 {
+    public void ChoosingTypeTasks(int value)
+    {
+        Debug.Log(value.ToString());
+    }
+
+    /*public Text title;
+    public Text deadline;
+    public Text timeExecution;*/
+    public GameObject contentDatainput;
+    private bool click = false;
+
+    public void PaneOpeningRegulation()
+    {
+        if (!click)
+        {
+            contentDatainput.SetActive(true);
+            click = true;
+        }
+        else
+        {
+            contentDatainput.SetActive(false);
+            click = false;
+        }
+    }
+
+    [SerializeField] private InputField nameTask;
     public GameObject prefabTask;
     public RectTransform contentListTask;
+    private string titleTask = "";
+    private string deadline = "";
+    private string timeExecution = "";
 
-    public void AddingTask()
+
+    public void AddTask()
     {
+        titleTask = nameTask.text.ToString();
+        deadline = "";
+        timeExecution = "";
         StartCoroutine(GetItems(results => OnRecevedItem(results)));
+        PaneOpeningRegulation();
     }
 
     void OnRecevedItem(ItemListModel item)
@@ -32,9 +66,9 @@ public class AddingTasks : MonoBehaviour
     {
         yield return new WaitForSeconds(0);
         var results = new ItemListModel();
-        results.title = PanelParametersTask.nameTaskText;
-        results.deadline = "дедлайн";
-        results.timeExecution = "время";
+        results.title = titleTask;
+        results.deadline = deadline;
+        results.timeExecution = timeExecution;
 
         callback(results);
     }
@@ -44,7 +78,6 @@ public class AddingTasks : MonoBehaviour
         public Text title;
         public Text deadline;
         public Text timeExecution;
-        public Button Parameters;
 
         public ItemListView(Transform rootView)
         {
@@ -61,4 +94,3 @@ public class AddingTasks : MonoBehaviour
         public string timeExecution;
     }
 }
-
