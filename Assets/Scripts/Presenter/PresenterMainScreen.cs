@@ -10,11 +10,8 @@ public class PresenterMainScreen : MonoBehaviour
         Debug.Log(value.ToString());
     }
 
-    /*public Text title;
-    public Text deadline;
-    public Text timeExecution;*/
     public GameObject contentDatainput;
-    private bool click = false;
+    private bool click = false; 
 
     public void PaneOpeningRegulation()
     {
@@ -31,18 +28,27 @@ public class PresenterMainScreen : MonoBehaviour
     }
 
     [SerializeField] private InputField nameTask;
+    [SerializeField] private InputField deadlineTask;
+    [SerializeField] private InputField timeExecutionTask;
+    [SerializeField] private InputField timeImportance;
+    [SerializeField] private Toggle fixedTask;
+    [SerializeField] private Toggle waiting;
     public GameObject prefabTask;
     public RectTransform contentListTask;
     private string titleTask = "";
     private string deadline = "";
     private string timeExecution = "";
+    private string importance = "";
+    private bool taskFixed = false;
 
 
     public void AddTask()
     {
         titleTask = nameTask.text.ToString();
-        deadline = "";
-        timeExecution = "";
+        deadline = deadlineTask.text.ToString();
+        timeExecution = timeExecutionTask.text.ToString();
+        importance = timeImportance.text.ToString();
+        taskFixed = fixedTask.isOn;
         StartCoroutine(GetItems(results => OnRecevedItem(results)));
         PaneOpeningRegulation();
     }
@@ -56,10 +62,11 @@ public class PresenterMainScreen : MonoBehaviour
 
     void InitializeItemView(GameObject viewGameObject, ItemListModel model)
     {
-        ItemListView view = new ItemListView(viewGameObject.transform);
+        ItemListView view = new ItemListView(viewGameObject.transform, taskFixed);
         view.title.text = model.title;
         view.deadline.text = model.deadline;
         view.timeExecution.text = model.timeExecution;
+        view.importance.text = model.importance;
     }
 
     IEnumerator GetItems(System.Action<ItemListModel> callback)
@@ -69,6 +76,7 @@ public class PresenterMainScreen : MonoBehaviour
         results.title = titleTask;
         results.deadline = deadline;
         results.timeExecution = timeExecution;
+        results.importance = importance;
 
         callback(results);
     }
@@ -78,12 +86,21 @@ public class PresenterMainScreen : MonoBehaviour
         public Text title;
         public Text deadline;
         public Text timeExecution;
+        public Text importance;
+        public Image taskFixedIcon;
 
-        public ItemListView(Transform rootView)
+        public ItemListView(Transform rootView, bool fixedTask)
         {
             title = rootView.Find("title").GetComponent<Text>();
             deadline = rootView.Find("deadline").GetComponent<Text>();
             timeExecution = rootView.Find("executionTime").GetComponent<Text>();
+            importance = rootView.Find("importance").GetComponent<Text>();
+            taskFixedIcon = rootView.Find("Image").GetComponent<Image>();
+           if (!fixedTask)
+            {
+                Destroy(taskFixedIcon);
+            }
+            
         }
     }
 
@@ -92,5 +109,6 @@ public class PresenterMainScreen : MonoBehaviour
         public string title;
         public string deadline;
         public string timeExecution;
+        public string importance;
     }
 }
