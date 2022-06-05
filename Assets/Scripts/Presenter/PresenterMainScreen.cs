@@ -11,6 +11,7 @@ public class PresenterMainScreen : MonoBehaviour
     }
 
     public GameObject contentDatainput;
+    public RectTransform buttonAddTask;
     private bool click = false; 
 
     public void PaneOpeningRegulation()
@@ -19,16 +20,19 @@ public class PresenterMainScreen : MonoBehaviour
         {
             contentDatainput.SetActive(true);
             click = true;
+            buttonAddTask.Rotate(0, 0, 45);
         }
         else
         {
             contentDatainput.SetActive(false);
+            buttonAddTask.Rotate(0, 0, -45);
             click = false;
         }
     }
 
     [SerializeField] private InputField nameTask;
-    [SerializeField] private InputField deadlineTask;
+    [SerializeField] private InputField timeDeadlineTask;
+    [SerializeField] private InputField dataDeadlineTask;
     [SerializeField] private InputField timeExecutionTask;
     [SerializeField] private InputField timeImportance;
     [SerializeField] private Toggle fixedTask;
@@ -42,10 +46,21 @@ public class PresenterMainScreen : MonoBehaviour
     private bool taskFixed = false;
 
 
+    public void ClearFormTask()
+    {
+        nameTask.text = "";
+        timeDeadlineTask.text = "";
+        dataDeadlineTask.text = "";
+        timeExecutionTask.text = "";
+        timeImportance.text = "";
+        fixedTask.isOn = false;
+        waiting.isOn = false;
+    }
+
     public void AddTask()
     {
         titleTask = nameTask.text.ToString();
-        deadline = deadlineTask.text.ToString();
+        deadline = timeDeadlineTask.text.ToString() + dataDeadlineTask.text.ToString();
         timeExecution = timeExecutionTask.text.ToString();
         importance = timeImportance.text.ToString();
         taskFixed = fixedTask.isOn;
