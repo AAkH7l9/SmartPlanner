@@ -1563,6 +1563,7 @@ GameObject:
   - component: {fileID: 1040371450}
   - component: {fileID: 1040371449}
   - component: {fileID: 1040371448}
+  - component: {fileID: 1040371452}
   m_Layer: 5
   m_Name: ScrollView
   m_TagString: Untagged
@@ -1603,10 +1604,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 4526817}
-  m_Horizontal: 1
+  m_Horizontal: 0
   m_Vertical: 1
-  m_MovementType: 2
-  m_Elasticity: 0.1
+  m_MovementType: 1
+  m_Elasticity: 0.05
   m_Inertia: 1
   m_DecelerationRate: 0.135
   m_ScrollSensitivity: 80
@@ -1619,7 +1620,19 @@ MonoBehaviour:
   m_VerticalScrollbarSpacing: 0
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1040371452}
+        m_TargetAssemblyTypeName: ScrollRefresh, Assembly-CSharp
+        m_MethodName: Refresh
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1040371449
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1671,6 +1684,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1040371446}
   m_CullTransparentMesh: 1
+--- !u!114 &1040371452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1040371446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f85415b941bd5604bb3f39ef81a2ca35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  content: {fileID: 4526817}
 --- !u!114 &1189470836 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4022406738689200922, guid: 6795aa7837f26c34a86b0732cef111a1, type: 3}

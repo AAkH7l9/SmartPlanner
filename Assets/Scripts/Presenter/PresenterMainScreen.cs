@@ -44,7 +44,12 @@ public class PresenterMainScreen : MonoBehaviour
     private string timeExecution = "";
     private string importance = "";
     private bool taskFixed = false;
+    private int idCounter = 0;
 
+    private void PrintId(string id)
+    {
+        Debug.Log(id);
+    }
 
     public void ClearFormTask()
     {
@@ -78,10 +83,17 @@ public class PresenterMainScreen : MonoBehaviour
     void InitializeItemView(GameObject viewGameObject, ItemListModel model)
     {
         ItemListView view = new ItemListView(viewGameObject.transform, taskFixed);
+        
         view.title.text = model.title;
         view.deadline.text = model.deadline;
         view.timeExecution.text = model.timeExecution;
         view.importance.text = model.importance;
+        view.id.text = model.id;
+
+        view.buttonTask.onClick.AddListener(() =>
+        {
+            PrintId(view.id.text + "Task");
+        });
     }
 
     IEnumerator GetItems(System.Action<ItemListModel> callback)
@@ -93,25 +105,33 @@ public class PresenterMainScreen : MonoBehaviour
         results.timeExecution = timeExecution;
         results.importance = importance;
 
+        ++idCounter;
+        results.id = idCounter.ToString();
+
         callback(results);
     }
 
     public class ItemListView
     {
+        public Text id;
         public Text title;
         public Text deadline;
         public Text timeExecution;
         public Text importance;
         public Image taskFixedIcon;
+        public Button buttonTask;
 
         public ItemListView(Transform rootView, bool fixedTask)
         {
-            title = rootView.Find("title").GetComponent<Text>();
-            deadline = rootView.Find("deadline").GetComponent<Text>();
-            timeExecution = rootView.Find("executionTime").GetComponent<Text>();
-            importance = rootView.Find("importance").GetComponent<Text>();
-            taskFixedIcon = rootView.Find("Image").GetComponent<Image>();
-           if (!fixedTask)
+            Transform taskView = rootView.Find("View").Find("Content");
+            id = rootView.Find("ID").GetComponent<Text>();
+            title = taskView.Find("title").GetComponent<Text>();
+            deadline = taskView.Find("deadline").GetComponent<Text>();
+            timeExecution = taskView.Find("executionTime").GetComponent<Text>();
+            importance = taskView.Find("importance").GetComponent<Text>();
+            taskFixedIcon = taskView.Find("lock").GetComponent<Image>();
+            buttonTask = rootView.Find("View").Find("Content").GetComponent<Button>();
+            if (!fixedTask)
             {
                 Destroy(taskFixedIcon);
             }
@@ -125,5 +145,6 @@ public class PresenterMainScreen : MonoBehaviour
         public string deadline;
         public string timeExecution;
         public string importance;
+        public string id;
     }
 }
