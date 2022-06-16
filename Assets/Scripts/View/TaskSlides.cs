@@ -1,28 +1,30 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class TaskSlides : MonoBehaviour
 {
     [SerializeField]  private RectTransform content;
+    bool taskFixed = false;
     public void slideControler()
     {
-        if (content.position.x > 0.65)
+        if (content.position.x > 0.9 || (taskFixed && content.position.x > 0.5))
         {
-            OneButtonLeft();
+            content.position = new Vector3(1, content.position.y);
+            taskFixed = true;
         }
-        if (content.position.x < -1.3)
+        if (content.position.x < -1.6 || (taskFixed && content.position.x < -1.2) )
         {
-            TwoButtonRight();
+            content.position = new Vector3(-2, content.position.y);
+            taskFixed = true;
         }
-    }
-    private void OneButtonLeft()
-    {
-        content.position = new Vector3 (1, content.position.y);
-    }
-
-    public void TwoButtonRight()
-    {
-        content.position = new Vector3(-2, content.position.y);
+        
+        if(content.position.x < 0.3 && content.position.x > -0.5)
+        {
+            taskFixed = false;
+        }
     }
 }
+

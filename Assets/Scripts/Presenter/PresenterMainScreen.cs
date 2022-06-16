@@ -1,15 +1,56 @@
 using System.Collections;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Animations;
 
 public class PresenterMainScreen : MonoBehaviour
 {
-    public void ChoosingTypeTasks(int value)
+    TemporaryScript temporaryScript = new TemporaryScript();
+    int typeTask = 0;
+    public void Start()
     {
-        Debug.Log(value.ToString());
+        PrintTasks(temporaryScript.ReturnTaskList(0));
     }
 
+    public void PrintTasks(Task[] listTasks)
+    {
+        ClearListTasks();
+        for (int i = 0; i < listTasks.Length; i++)
+        {
+            taskFixed = listTasks[i].@fixed;
+            StartCoroutine(GetItems(results => OnRecevedItem(results), listTasks[i]));
+        }
+    }
+
+    private bool refresh = false;
+    public void RefreshList()
+    {
+
+        if (contentListTask.position.y < 3)
+        {
+            if (!refresh)
+            {
+                temporaryScript.UpdateList();
+                PrintTasks(temporaryScript.ReturnTaskList(typeTask));
+                refresh = true;
+            }
+        }
+        else
+        {
+            refresh = false;
+        }
+
+    }
+
+    public void ChoosingTypeTasks(int value)
+    {
+        typeTask = value;
+        PrintTasks(temporaryScript.ReturnTaskList(typeTask));
+    }
+
+    [Header("Панель добавления задач")]
     public GameObject contentDatainput;
     public RectTransform buttonAddTask;
     private bool click = false; 
@@ -30,6 +71,9 @@ public class PresenterMainScreen : MonoBehaviour
         }
     }
 
+
+   
+    [Header("Добавление задач")]
     [SerializeField] private InputField nameTask;
     [SerializeField] private InputField timeDeadlineTask;
     [SerializeField] private InputField dataDeadlineTask;
@@ -39,12 +83,31 @@ public class PresenterMainScreen : MonoBehaviour
     [SerializeField] private Toggle waiting;
     public GameObject prefabTask;
     public RectTransform contentListTask;
-    private string titleTask = "";
-    private string deadline = "";
-    private string timeExecution = "";
-    private string importance = "";
     private bool taskFixed = false;
     private int idCounter = 0;
+
+    public void AddTask()
+    {
+        CorrectnessDateTask();
+        Debug.Log("Добавить задачу " + nameTask.text);
+    }
+
+    private bool CorrectnessDateTask()
+    {
+        bool correctData = true;
+        Regex regex = new Regex(@"\d");
+        Debug.Log("Работает");
+        if (nameTask.text == "")
+        {
+            correctData = false;
+            //Добавить изменения цвета у названия задачи
+        }
+        if( regex.IsMatch(timeDeadlineTask.text))
+        {
+            Debug.Log("Работает аывваывыа");
+        }
+        return correctData;
+    }
 
     private void PrintId(string id)
     {
@@ -62,15 +125,12 @@ public class PresenterMainScreen : MonoBehaviour
         waiting.isOn = false;
     }
 
-    public void AddTask()
+    void ClearListTasks()
     {
-        titleTask = nameTask.text.ToString();
-        deadline = timeDeadlineTask.text.ToString() + dataDeadlineTask.text.ToString();
-        timeExecution = timeExecutionTask.text.ToString();
-        importance = timeImportance.text.ToString();
-        taskFixed = fixedTask.isOn;
-        StartCoroutine(GetItems(results => OnRecevedItem(results)));
-        PaneOpeningRegulation();
+        foreach (Transform child in contentListTask)
+        {
+            Destroy(child.gameObject);
+        }
     }
 
     void OnRecevedItem(ItemListModel item)
@@ -83,7 +143,9 @@ public class PresenterMainScreen : MonoBehaviour
     void InitializeItemView(GameObject viewGameObject, ItemListModel model)
     {
         ItemListView view = new ItemListView(viewGameObject.transform, taskFixed);
-        
+
+        Animation animDestroy = viewGameObject.GetComponent<Animation>();
+
         view.title.text = model.title;
         view.deadline.text = model.deadline;
         view.timeExecution.text = model.timeExecution;
@@ -92,18 +154,39 @@ public class PresenterMainScreen : MonoBehaviour
 
         view.buttonTask.onClick.AddListener(() =>
         {
-            PrintId(view.id.text + "Task");
+            PrintId("Открыть редактирование задачи под номером:" + view.id.text + "");
+            
+        });
+
+        view.buttonCompleted.onClick.AddListener(() =>
+        {
+            PrintId("Задача под номером " + view.id.text + " выполнена");
+            animDestroy.Play();
+        });
+
+        view.buttonDelete.onClick.AddListener(() =>
+        {
+            PrintId("Задача под номером " + view.id.text + " удалена");
+            animDestroy.Play();
+        });
+
+        view.buttonWaiting.onClick.AddListener(() =>
+        {
+            PrintId("Задача под номером " + view.id.text + " перемещена в ожидающие");
+            animDestroy.Play();
         });
     }
 
-    IEnumerator GetItems(System.Action<ItemListModel> callback)
+    
+
+    IEnumerator GetItems(System.Action<ItemListModel> callback, Task task)
     {
         yield return new WaitForSeconds(0);
         var results = new ItemListModel();
-        results.title = titleTask;
-        results.deadline = deadline;
-        results.timeExecution = timeExecution;
-        results.importance = importance;
+        results.title = task.name;
+        results.deadline = task.dataDeadline.ToString();
+        results.timeExecution = task.timeInMinutes.ToString();
+        results.importance = task.importance.ToString();
 
         ++idCounter;
         results.id = idCounter.ToString();
@@ -120,17 +203,25 @@ public class PresenterMainScreen : MonoBehaviour
         public Text importance;
         public Image taskFixedIcon;
         public Button buttonTask;
+        public Button buttonCompleted;
+        public Button buttonDelete;
+        public Button buttonWaiting;
 
         public ItemListView(Transform rootView, bool fixedTask)
         {
             Transform taskView = rootView.Find("View").Find("Content");
             id = rootView.Find("ID").GetComponent<Text>();
+
+            buttonTask = taskView.GetComponent<Button>();
+            buttonCompleted = taskView.Find("ButtonCompleted").GetComponent<Button>();
+            buttonDelete = taskView.Find("ButtonDelete").GetComponent<Button>();
+            buttonWaiting = taskView.Find("ButtonWaiting").GetComponent<Button>();
             title = taskView.Find("title").GetComponent<Text>();
             deadline = taskView.Find("deadline").GetComponent<Text>();
             timeExecution = taskView.Find("executionTime").GetComponent<Text>();
             importance = taskView.Find("importance").GetComponent<Text>();
             taskFixedIcon = taskView.Find("lock").GetComponent<Image>();
-            buttonTask = rootView.Find("View").Find("Content").GetComponent<Button>();
+            
             if (!fixedTask)
             {
                 Destroy(taskFixedIcon);
@@ -147,4 +238,7 @@ public class PresenterMainScreen : MonoBehaviour
         public string importance;
         public string id;
     }
+
+    
+
 }
