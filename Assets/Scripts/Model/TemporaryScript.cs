@@ -47,6 +47,20 @@ public class TemporaryScript : MonoBehaviour
                     Task.ConvertingElements(new[]{"Задача 1", "120","21.06.2022","12:00","5"}),
                     Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
                     Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
+                    Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
+                    Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
+                    Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
+                    Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
+                    Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
+                    Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
+                    Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
+                    Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
+                    Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
+                    Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
+                    Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
+                    Task.ConvertingElements(new[]{"Задача 2", "60","24.06.2022","14:00","6"}),
+                    Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
+                    Task.ConvertingElements(new[]{"Задача 3", "90","27.06.2022","16:00","7"}),
                     Task.ConvertingElements(new[]{"Задача 4", "30","30.06.2022","17:00","8"})};
             taskListActual = _taskListActual;
         }
@@ -79,6 +93,11 @@ public class TemporaryScript : MonoBehaviour
     // Вернуть настройки приложения 
     // Очистить выполненные задачи
     // Вернуть количество свободного времени
+
+    public int NewOverrideTask()
+    {
+        return 1;
+    }
 
 }
 

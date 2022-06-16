@@ -24,6 +24,7 @@ public class PresenterMainScreen : MonoBehaviour
         }
     }
 
+
     private bool refresh = false;
     public void RefreshList()
     {
@@ -34,6 +35,7 @@ public class PresenterMainScreen : MonoBehaviour
             {
                 temporaryScript.UpdateList();
                 PrintTasks(temporaryScript.ReturnTaskList(typeTask));
+                NewOverrideTasks();
                 refresh = true;
             }
         }
@@ -44,6 +46,34 @@ public class PresenterMainScreen : MonoBehaviour
 
     }
 
+    public void RefreshListButton()
+    {
+
+        temporaryScript.UpdateList();
+        PrintTasks(temporaryScript.ReturnTaskList(typeTask));
+        NewOverrideTasks();
+
+    }
+
+    [Header("Оповещение о просроченных задачах")]
+    [SerializeField] private Text notificationText;
+    [SerializeField] private Animation newNotification;
+    public void OnClickNotification()
+    {
+        notificationText.text = "";
+    }
+    private void NewOverrideTasks() {
+        int countOverride = temporaryScript.NewOverrideTask();
+        if  ( countOverride > 0) {
+            notificationText.text = countOverride.ToString();
+            newNotification.Play();
+        }
+        else
+        {
+            notificationText.text = "";
+        }
+    }
+
     public void ChoosingTypeTasks(int value)
     {
         typeTask = value;
@@ -51,8 +81,16 @@ public class PresenterMainScreen : MonoBehaviour
     }
 
     [Header("Панель добавления задач")]
-    public GameObject contentDatainput;
-    public RectTransform buttonAddTask;
+    [SerializeField] private GameObject contentDatainput;
+    [SerializeField] private RectTransform buttonAddTask;
+    [Header("Анимация кнопки добавления задач")]
+    [SerializeField] private Animation animButtonAddTask;
+    [SerializeField] private AnimationClip animAddTask;
+    [SerializeField] private AnimationClip animClosePanel;
+    [Header("Анимация панели добавления задач")]
+    [SerializeField] private Animation animPanelAddTask;
+    [SerializeField] private AnimationClip animOpenPanelEditTask;
+    [SerializeField] private AnimationClip animClosePanelEditTask;
     private bool click = false; 
 
     public void PaneOpeningRegulation()
@@ -61,18 +99,23 @@ public class PresenterMainScreen : MonoBehaviour
         {
             contentDatainput.SetActive(true);
             click = true;
-            buttonAddTask.Rotate(0, 0, 45);
+
+            animPanelAddTask.clip = animOpenPanelEditTask;
+            animButtonAddTask.clip = animAddTask;
+            animButtonAddTask.Play();
+            animPanelAddTask.Play();
         }
         else
         {
+            animPanelAddTask.clip = animClosePanelEditTask;
+            animButtonAddTask.clip = animClosePanel;
+            animButtonAddTask.Play();
+            animPanelAddTask.Play();
             contentDatainput.SetActive(false);
-            buttonAddTask.Rotate(0, 0, -45);
             click = false;
         }
     }
 
-
-   
     [Header("Добавление задач")]
     [SerializeField] private InputField nameTask;
     [SerializeField] private InputField timeDeadlineTask;
@@ -81,6 +124,11 @@ public class PresenterMainScreen : MonoBehaviour
     [SerializeField] private InputField timeImportance;
     [SerializeField] private Toggle fixedTask;
     [SerializeField] private Toggle waiting;
+    [Header("Картинки типов задач")]
+    [SerializeField] private Sprite imageActive;
+    [SerializeField] private Sprite imageWaiting;
+    [SerializeField] private Sprite imageOveride;
+    [SerializeField] private Sprite imageCompleted;
     public GameObject prefabTask;
     public RectTransform contentListTask;
     private bool taskFixed = false;
@@ -145,6 +193,29 @@ public class PresenterMainScreen : MonoBehaviour
         ItemListView view = new ItemListView(viewGameObject.transform, taskFixed);
 
         Animation animDestroy = viewGameObject.GetComponent<Animation>();
+        Sprite usingSpriteTask = imageActive;
+        
+        switch (typeTask)
+        {
+            case 0:
+                usingSpriteTask = imageActive;
+                break;
+            case 1:
+                usingSpriteTask = imageWaiting;
+                break;
+            case 2:
+                usingSpriteTask = imageOveride;
+                viewGameObject.transform.Find("View").Find("Content").Find("deadlineText").GetComponent<Text>().text = "Надо было начать до";
+                OnClickNotification();
+                break;
+            case 3:
+                usingSpriteTask = imageCompleted;
+                break;
+            default:
+                usingSpriteTask = imageActive;
+                break;
+        }
+        viewGameObject.transform.Find("View").Find("Content").GetComponent<Image>().sprite = usingSpriteTask;
 
         view.title.text = model.title;
         view.deadline.text = model.deadline;
@@ -184,7 +255,7 @@ public class PresenterMainScreen : MonoBehaviour
         yield return new WaitForSeconds(0);
         var results = new ItemListModel();
         results.title = task.name;
-        results.deadline = task.dataDeadline.ToString();
+        results.deadline = task.beginning.ToString();
         results.timeExecution = task.timeInMinutes.ToString();
         results.importance = task.importance.ToString();
 
@@ -211,7 +282,6 @@ public class PresenterMainScreen : MonoBehaviour
         {
             Transform taskView = rootView.Find("View").Find("Content");
             id = rootView.Find("ID").GetComponent<Text>();
-
             buttonTask = taskView.GetComponent<Button>();
             buttonCompleted = taskView.Find("ButtonCompleted").GetComponent<Button>();
             buttonDelete = taskView.Find("ButtonDelete").GetComponent<Button>();
