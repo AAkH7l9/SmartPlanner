@@ -2,8 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class TemporaryScript : MonoBehaviour
+#if false
+public class TemporaryScript 
 {
     Task[] taskListActual = {
                     Task.ConvertingElements(new[]{"Задача 1", "120","21.06.2022","12:00","5"}),
@@ -101,7 +101,6 @@ public class TemporaryScript : MonoBehaviour
 
 }
 
-
 public class Task
 {
     public string name;
@@ -143,3 +142,4 @@ public class Task
 }
 
         
+#endif

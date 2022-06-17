@@ -1,17 +1,34 @@
+using System;
 using System.Collections;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Animations;
+using Newtonsoft.Json;
+
+using Backend;
+using Task = Backend.Task;
+
 
 public class PresenterMainScreen : MonoBehaviour
 {
-    TemporaryScript temporaryScript = new TemporaryScript();
-    int typeTask = 0;
+    TaskManager taskManager;
+    TaskStatus status = TaskStatus.Relevant;
     public void Start()
     {
-        PrintTasks(temporaryScript.ReturnTaskList(0));
+        if (!PlayerPrefs.HasKey("json"))
+            PlayerPrefs.SetString("json", "");
+        else if (!PlayerPrefs.HasKey("idcounter"))
+            PlayerPrefs.SetInt("idcounter", 0);
+        else if (!PlayerPrefs.HasKey("blockingtime"))
+            PlayerPrefs.SetString("blockingtime", @"['17:00', '20:00', '17:00', '20:00', '17:00', '20:00', '17:00', '20:00', '17:00', '20:00', '17:00', '20:00', '17:00', '20:00',]");
+        List<Task> tasks = JsonConvert.DeserializeObject<List<Task>>(PlayerPrefs.GetString("json"));
+        int idcounter = PlayerPrefs.GetInt("idcounter");
+        List<string> blockingTime = JsonConvert.DeserializeObject<List<string>>(PlayerPrefs.GetString("blockingtime"));
+        taskManager = TaskManager.GetInstance(tasks, blockingTime, idcounter);
+        PrintTasks(taskManager.GetAllRelevantTasks().ToArray());
     }
 
     public void PrintTasks(Task[] listTasks)
@@ -19,8 +36,12 @@ public class PresenterMainScreen : MonoBehaviour
         ClearListTasks();
         for (int i = 0; i < listTasks.Length; i++)
         {
-            taskFixed = listTasks[i].@fixed;
-            StartCoroutine(GetItems(results => OnRecevedItem(results), listTasks[i]));
+            if(i == 2)
+            {
+                listTasks[i].IsFixed = true;
+            }
+
+            StartCoroutine(GetItems(results => OnRecievedItem(results, listTasks[i]), listTasks[i]));
         }
     }
 
@@ -33,8 +54,25 @@ public class PresenterMainScreen : MonoBehaviour
         {
             if (!refresh)
             {
-                temporaryScript.UpdateList();
-                PrintTasks(temporaryScript.ReturnTaskList(typeTask));
+                taskManager.UpdateTasks();
+                switch(status)
+                {
+                    case TaskStatus.Relevant:
+                        PrintTasks(taskManager.GetAllRelevantTasks().ToArray());
+                        break;
+                    case TaskStatus.Awaiting:
+                        PrintTasks(taskManager.GetAllAwaitingTasks().ToArray());
+                        break;
+                    case TaskStatus.Overdue:
+                        PrintTasks(taskManager.GetAllOverdueTasks().ToArray());
+                        break;
+                    case TaskStatus.Done:
+                        PrintTasks(taskManager.GetAllDoneTasks().ToArray());
+                        break;
+                    default:
+                        break;
+
+                }
                 NewOverrideTasks();
                 refresh = true;
             }
@@ -49,10 +87,25 @@ public class PresenterMainScreen : MonoBehaviour
     public void RefreshListButton()
     {
 
-        temporaryScript.UpdateList();
-        PrintTasks(temporaryScript.ReturnTaskList(typeTask));
+        taskManager.UpdateTasks();
+        switch (status)
+        {
+            case TaskStatus.Relevant:
+                PrintTasks(taskManager.GetAllRelevantTasks().ToArray());
+                break;
+            case TaskStatus.Awaiting:
+                PrintTasks(taskManager.GetAllAwaitingTasks().ToArray());
+                break;
+            case TaskStatus.Overdue:
+                PrintTasks(taskManager.GetAllOverdueTasks().ToArray());
+                break;
+            case TaskStatus.Done:
+                PrintTasks(taskManager.GetAllDoneTasks().ToArray());
+                break;
+            default:
+                break;
+        }
         NewOverrideTasks();
-
     }
 
     [Header("Оповещение о просроченных задачах")]
@@ -63,7 +116,7 @@ public class PresenterMainScreen : MonoBehaviour
         notificationText.text = "";
     }
     private void NewOverrideTasks() {
-        int countOverride = temporaryScript.NewOverrideTask();
+        int countOverride = taskManager.GetOverdueTasksCount();
         if  ( countOverride > 0) {
             notificationText.text = countOverride.ToString();
             newNotification.Play();
@@ -76,8 +129,29 @@ public class PresenterMainScreen : MonoBehaviour
 
     public void ChoosingTypeTasks(int value)
     {
-        typeTask = value;
-        PrintTasks(temporaryScript.ReturnTaskList(typeTask));
+        
+        switch (value)
+        {
+            case 0:
+                status = TaskStatus.Relevant;
+                PrintTasks(taskManager.GetAllRelevantTasks().ToArray());
+                break;
+            case 1:
+                status = TaskStatus.Awaiting;
+                PrintTasks(taskManager.GetAllAwaitingTasks().ToArray());
+                break;
+            case 2:
+                status = TaskStatus.Overdue;
+                PrintTasks(taskManager.GetAllOverdueTasks().ToArray());
+                break;
+
+            case 3:
+                status = TaskStatus.Done;
+                PrintTasks(taskManager.GetAllDoneTasks().ToArray());
+                break;
+            default:
+                break;
+        }
     }
 
     [Header("Панель добавления задач")]
@@ -124,6 +198,8 @@ public class PresenterMainScreen : MonoBehaviour
     [SerializeField] private InputField timeImportance;
     [SerializeField] private Toggle fixedTask;
     [SerializeField] private Toggle waiting;
+    [SerializeField] private Text textButtonCreateTask;
+    [SerializeField] private Text id;
     [Header("Картинки типов задач")]
     [SerializeField] private Sprite imageActive;
     [SerializeField] private Sprite imageWaiting;
@@ -131,18 +207,47 @@ public class PresenterMainScreen : MonoBehaviour
     [SerializeField] private Sprite imageCompleted;
     public GameObject prefabTask;
     public RectTransform contentListTask;
-    private bool taskFixed = false;
-    private int idCounter = 0;
 
     public void AddTask()
     {
-        CorrectnessDateTask();
-        Debug.Log("Добавить задачу " + nameTask.text);
+        if (textButtonCreateTask.text == "Сохранить изменения")
+        {
+            taskManager.EditTask(taskManager.GetTaskById(int.Parse(id.text)));
+        }
+        else
+        {
+            if (CorrectnessDateTask())
+            {
+                string dateString = dataDeadlineTask.text;
+                string timeString = timeDeadlineTask.text;
+                Debug.Log(dateString);
+                Debug.Log(timeString);
+
+                DateTime deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
+
+                TaskStatus statusTask = TaskStatus.Relevant;
+                if (waiting.isOn)
+                {
+                    statusTask = TaskStatus.Awaiting;
+                }
+                Task task = new Task(
+                    nameTask.text,
+                    int.Parse(timeExecutionTask.text),
+                    deadLine,
+                    int.Parse(timeImportance.text),
+                    isEnoughTime: true,
+                    fixedTask.isOn,
+                    statusTask
+                    );
+                taskManager.AddTask(task);
+            }
+        }
+        RefreshListButton();
     }
 
     private bool CorrectnessDateTask()
     {
-        bool correctData = true;
+        /*bool correctData = true;
         Regex regex = new Regex(@"\d");
         Debug.Log("Работает");
         if (nameTask.text == "")
@@ -154,12 +259,8 @@ public class PresenterMainScreen : MonoBehaviour
         {
             Debug.Log("Работает аывваывыа");
         }
-        return correctData;
-    }
-
-    private void PrintId(string id)
-    {
-        Debug.Log(id);
+        return correctData;*/
+        return true;
     }
 
     public void ClearFormTask()
@@ -171,6 +272,34 @@ public class PresenterMainScreen : MonoBehaviour
         timeImportance.text = "";
         fixedTask.isOn = false;
         waiting.isOn = false;
+        textButtonCreateTask.text = "Создать задачу";
+    }
+
+    private void FillDateFormTask(Task task)
+    {
+        nameTask.text = task.Name;
+        if (task.DataDeadline.Minute.ToString().Length == 1)
+        {
+            timeDeadlineTask.text = task.DataDeadline.Hour.ToString() + ":0" + task.DataDeadline.Minute.ToString();
+        }
+        else
+        {
+            timeDeadlineTask.text = task.DataDeadline.Hour.ToString() + ":" + task.DataDeadline.Minute.ToString();
+        }
+        dataDeadlineTask.text = task.DataDeadline.Day.ToString() + "." + task.DataDeadline.Month.ToString() + "." + task.DataDeadline.Year.ToString();
+        timeExecutionTask.text = task.TimeInMinutes.ToString();
+        timeImportance.text = task.Importance.ToString();
+        fixedTask.isOn = task.IsFixed;
+        if (task.Status == TaskStatus.Awaiting)
+        {
+            waiting.isOn = true;
+        }
+        else
+        {
+            waiting.isOn = false;
+        }
+        textButtonCreateTask.text = "Сохранить изменения";
+        id.text = task.Id.ToString();
     }
 
     void ClearListTasks()
@@ -181,34 +310,34 @@ public class PresenterMainScreen : MonoBehaviour
         }
     }
 
-    void OnRecevedItem(ItemListModel item)
+    void OnRecievedItem(ItemListModel item, Task task)
     {
         var instance = Instantiate(prefabTask.gameObject);
         instance.transform.SetParent(contentListTask, false);
-        InitializeItemView(instance, item);
+        InitializeItemView(instance, item, task);
     }
 
-    void InitializeItemView(GameObject viewGameObject, ItemListModel model)
+    void InitializeItemView(GameObject viewGameObject, ItemListModel model, Task task)
     {
-        ItemListView view = new ItemListView(viewGameObject.transform, taskFixed);
+        ItemListView view = new ItemListView(viewGameObject.transform, task);
 
         Animation animDestroy = viewGameObject.GetComponent<Animation>();
         Sprite usingSpriteTask = imageActive;
         
-        switch (typeTask)
+        switch (status)
         {
-            case 0:
+            case TaskStatus.Relevant:
                 usingSpriteTask = imageActive;
                 break;
-            case 1:
+            case TaskStatus.Awaiting:
                 usingSpriteTask = imageWaiting;
                 break;
-            case 2:
+            case TaskStatus.Overdue:
                 usingSpriteTask = imageOveride;
                 viewGameObject.transform.Find("View").Find("Content").Find("deadlineText").GetComponent<Text>().text = "Надо было начать до";
                 OnClickNotification();
                 break;
-            case 3:
+            case TaskStatus.Done:
                 usingSpriteTask = imageCompleted;
                 break;
             default:
@@ -223,28 +352,44 @@ public class PresenterMainScreen : MonoBehaviour
         view.importance.text = model.importance;
         view.id.text = model.id;
 
+
         view.buttonTask.onClick.AddListener(() =>
         {
-            PrintId("Открыть редактирование задачи под номером:" + view.id.text + "");
             
+            Task task = taskManager.GetTaskById(int.Parse(view.id.text));
+            FillDateFormTask(task);
+            PaneOpeningRegulation();
+
+
         });
 
         view.buttonCompleted.onClick.AddListener(() =>
         {
-            PrintId("Задача под номером " + view.id.text + " выполнена");
+            if (status == TaskStatus.Done)
+            {
+                taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Done);
+            }
+            else
+            {
+                taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Relevant);
+            }
             animDestroy.Play();
         });
 
         view.buttonDelete.onClick.AddListener(() =>
         {
-            PrintId("Задача под номером " + view.id.text + " удалена");
+            taskManager.DeleteTaskById(int.Parse(view.id.text));
             animDestroy.Play();
+
         });
 
         view.buttonWaiting.onClick.AddListener(() =>
         {
-            PrintId("Задача под номером " + view.id.text + " перемещена в ожидающие");
-            animDestroy.Play();
+            if (status == TaskStatus.Awaiting) { }
+            else {
+                taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Awaiting);
+                animDestroy.Play();
+            }
         });
     }
 
@@ -252,17 +397,15 @@ public class PresenterMainScreen : MonoBehaviour
 
     IEnumerator GetItems(System.Action<ItemListModel> callback, Task task)
     {
-        yield return new WaitForSeconds(0);
         var results = new ItemListModel();
-        results.title = task.name;
-        results.deadline = task.beginning.ToString();
-        results.timeExecution = task.timeInMinutes.ToString();
-        results.importance = task.importance.ToString();
-
-        ++idCounter;
-        results.id = idCounter.ToString();
+        results.title = task.Name;
+        results.deadline = task.Beginning.ToString();
+        results.timeExecution = task.TimeInMinutes.ToString();
+        results.importance = task.Importance.ToString();
+        results.id = task.Id.ToString();
 
         callback(results);
+        yield return results;
     }
 
     public class ItemListView
@@ -278,7 +421,7 @@ public class PresenterMainScreen : MonoBehaviour
         public Button buttonDelete;
         public Button buttonWaiting;
 
-        public ItemListView(Transform rootView, bool fixedTask)
+        public ItemListView(Transform rootView, Task task)
         {
             Transform taskView = rootView.Find("View").Find("Content");
             id = rootView.Find("ID").GetComponent<Text>();
@@ -292,7 +435,7 @@ public class PresenterMainScreen : MonoBehaviour
             importance = taskView.Find("importance").GetComponent<Text>();
             taskFixedIcon = taskView.Find("lock").GetComponent<Image>();
             
-            if (!fixedTask)
+            if (!task.IsFixed)
             {
                 Destroy(taskFixedIcon);
             }
