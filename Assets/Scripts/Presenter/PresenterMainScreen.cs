@@ -36,11 +36,6 @@ public class PresenterMainScreen : MonoBehaviour
         ClearListTasks();
         for (int i = 0; i < listTasks.Length; i++)
         {
-            if(i == 2)
-            {
-                listTasks[i].IsFixed = true;
-            }
-
             StartCoroutine(GetItems(results => OnRecievedItem(results, listTasks[i]), listTasks[i]));
         }
     }
@@ -212,7 +207,36 @@ public class PresenterMainScreen : MonoBehaviour
     {
         if (textButtonCreateTask.text == "Сохранить изменения")
         {
-            taskManager.EditTask(taskManager.GetTaskById(int.Parse(id.text)));
+            Task task = taskManager.GetTaskById(int.Parse(id.text));
+            if (CorrectnessDateTask())
+            {
+                string dateString = dataDeadlineTask.text;
+                string timeString = timeDeadlineTask.text;
+
+                Debug.Log(dateString);
+                Debug.Log(timeString);
+                DateTime deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
+                
+                TaskStatus statusTask = TaskStatus.Relevant;
+                if (waiting.isOn)
+                {
+                    statusTask = TaskStatus.Awaiting;
+                }
+
+                task.Name = nameTask.text;
+                task.TimeInMinutes = int.Parse(timeExecutionTask.text);
+                task.DataDeadline = deadLine;
+                task.Importance = int.Parse(timeImportance.text);
+                task.IsEnoughTime = true;
+                task.IsFixed = fixedTask.isOn;
+                task.Status = statusTask;
+
+
+                taskManager.EditTask(task);
+            }
+
+            
+
         }
         else
         {
@@ -286,7 +310,17 @@ public class PresenterMainScreen : MonoBehaviour
         {
             timeDeadlineTask.text = task.DataDeadline.Hour.ToString() + ":" + task.DataDeadline.Minute.ToString();
         }
-        dataDeadlineTask.text = task.DataDeadline.Day.ToString() + "." + task.DataDeadline.Month.ToString() + "." + task.DataDeadline.Year.ToString();
+        Debug.Log(task.DataDeadline.Month.ToString());
+        if (task.DataDeadline.Month.ToString().Length == 1)
+        {
+            dataDeadlineTask.text = task.DataDeadline.Day.ToString() + ".0" + task.DataDeadline.Month.ToString() + "." + task.DataDeadline.Year.ToString();
+        }
+        else
+        {
+            dataDeadlineTask.text = task.DataDeadline.Day.ToString() + "." + task.DataDeadline.Month.ToString() + "." + task.DataDeadline.Year.ToString();
+        }
+
+
         timeExecutionTask.text = task.TimeInMinutes.ToString();
         timeImportance.text = task.Importance.ToString();
         fixedTask.isOn = task.IsFixed;

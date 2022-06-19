@@ -46,18 +46,26 @@ public class PresenterCalendar : MonoBehaviour
         if (WhatMonth(textMonth.text) == 0)
         {
             textMonth.text = listMonth[11];
-            textYear.text = (int.Parse(textYear.text) - 1).ToString();
+            submittedYear = int.Parse(textYear.text) - 1;
         }
         else
         {
             textMonth.text = listMonth[WhatMonth(textMonth.text) - 1];
         }
         submittedMonth = WhatMonth(textMonth.text)+1;
+        textYear.text = submittedYear.ToString();
+        furstDayMonthOfWeek = (int)new DateTime(submittedYear, submittedMonth, 1).DayOfWeek;
         
-        furstDayMonthOfWeek = (int)new DateTime(DateTime.Now.Year, submittedMonth, 1).DayOfWeek;
-        lastDayMonth = new DateTime(DateTime.Now.Year, submittedMonth + 1, 1).AddDays(-1).Day;
+        if (submittedMonth == 12)
+        {
+            lastDayMonth = new DateTime(submittedYear+1, 1 , 1).AddDays(-1).Day;
+        }
+        else
+        {
+            lastDayMonth = new DateTime(submittedYear, submittedMonth + 1, 1).AddDays(-1).Day;
+        }
+
         RefreshCalendar();
-        Debug.Log(submittedMonth);
     }
 
     public void onClickNextMonth()
@@ -65,17 +73,26 @@ public class PresenterCalendar : MonoBehaviour
         if (WhatMonth(textMonth.text) == 11)
         {
             textMonth.text = listMonth[0];
-            textYear.text = (int.Parse(textYear.text) + 1).ToString();
+            submittedYear = int.Parse(textYear.text) + 1;
         }
         else
         {
             textMonth.text = listMonth[WhatMonth(textMonth.text) + 1];
         }
         submittedMonth = WhatMonth(textMonth.text)+1;
-        furstDayMonthOfWeek = (int)new DateTime(DateTime.Now.Year, submittedMonth, 1).DayOfWeek;
-        lastDayMonth = new DateTime(DateTime.Now.Year, submittedMonth + 1, 1).AddDays(-1).Day;
+        textYear.text = submittedYear.ToString(); 
+        furstDayMonthOfWeek = (int)new DateTime(submittedYear, submittedMonth, 1).DayOfWeek;
+        if (submittedMonth == 12)
+        {
+            lastDayMonth = new DateTime(submittedYear + 1, 1, 1).AddDays(-1).Day;
+        }
+        else
+        {
+            lastDayMonth = new DateTime(submittedYear, submittedMonth + 1, 1).AddDays(-1).Day;
+        }
         RefreshCalendar();
-        Debug.Log(submittedMonth);
+
+
     }
     private int WhatMonth(string month)
     {
@@ -119,7 +136,7 @@ public class PresenterCalendar : MonoBehaviour
                 new Day(0, DayType.Normal),
                 new Day(0, DayType.Normal),
                 new Day(0, DayType.Normal),
-                new Day(0, DayType.Past),
+                new Day(0, DayType.Normal),
                 new Day(0, DayType.Normal),
                 new Day(0, DayType.Normal)};
         for (int i = furstDayMonthOfWeek - 1; i < weekNumber.Length; i++)
@@ -130,8 +147,6 @@ public class PresenterCalendar : MonoBehaviour
         }
         StartCoroutine(GetItems(results => OnRecevedItem(results, weekNumber), weekNumber));
 
-
-        Debug.Log(lastDayMonth);
         for (int i = 0; submittedDay <= lastDayMonth; i++)
         {
             weekNumber = new Day[7] { 
@@ -171,7 +186,7 @@ public class PresenterCalendar : MonoBehaviour
         RefreshCalendar();
         double freeMinutes = taskManager.GetFreeTime(selectedDate).TotalMinutes;
         dateFreeTime.text = "По " + selectedDate.Day.ToString() + " " + listMonthWithEnd[selectedDate.Month - 1 ] + " свободно";
-        freeTime.text = (int)freeMinutes/60 - 24 + "ч. " + (int)freeMinutes%60 + "мин.";
+        freeTime.text = (int)freeMinutes/60 + "ч. " + (int)freeMinutes%60 + "мин.";
     }
 
     void OnRecevedItem(ItemListModel item, Day[] weekNumber)

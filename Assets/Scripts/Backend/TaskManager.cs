@@ -150,9 +150,10 @@ namespace Backend
             {
                 task.Beginning = task.DataDeadline.AddMinutes(-task.TimeInMinutes);
                 task.Ending = task.DataDeadline;
+                task.IsEnoughTime = true;
             }
             MagicAlgorithm.RankingByImportance(ref tasksArray);
-            MagicAlgorithm.SortingTask(tasksArray);
+            tasksArray = MagicAlgorithm.SortingTask(tasksArray);
             _tasks = tasksArray.ToList();
             string taskString = JsonConvert.SerializeObject(_tasks, Formatting.Indented);
             PlayerPrefs.SetString("json", taskString);
@@ -170,21 +171,34 @@ namespace Backend
         public static class MagicAlgorithm
         {
 
-            public static void SortingTask(Task[] listTasks)
+            public static Task[] SortingTask(Task[] listTasks)
             {
                 Task[] timeLine;
                 Task[] arrayBlockTime = DailyTimeLimit(GetInstance()._blockingTime);
                 timeLine = AddBlokingTime(arrayBlockTime, listTasks);
 
                 OffsetTask(ref listTasks, ref timeLine);
-                OverdueTasks(listTasks, timeLine);
+                listTasks = OverdueTasks(listTasks, timeLine);
                 GetInstance()._timeline = timeLine;
+
+                for (int i = 0; i < listTasks.Length; i++)
+                {
+                    for (int j = 0; j < timeLine.Length; j++)
+                    {
+                        if(listTasks[i].Id == timeLine[j]?.Id)
+                        {
+                            listTasks[i] = timeLine[j];
+                        }
+                    }
+                }
+
+                return listTasks;
             }
 
 
             private static Task[] AddBlokingTime(Task[] blockTime, Task[] listTasks)
             {
-                Task[] timeLine = new Task[listTasks.Length + LengthTimeLIne(listTasks)];
+                Task[] timeLine = new Task[listTasks.Length + LengthTimeLIne(listTasks)+ 1];
 
                 for (int i = 0; i < LengthTimeLIne(listTasks) + 1; i++)
                 {
@@ -214,6 +228,13 @@ namespace Backend
                     else
                     {
                         SearchLocationTask(ref timeLine, temporaryTimeLine, listTasks[i]);
+                    }
+                }
+                for (int i = 0; i < timeLine.Length; i++)
+                {
+                    if (timeLine[i]?.Name !=null)
+                    {
+                        timeLine[i].Status = TaskStatus.Relevant;
                     }
                 }
             }
@@ -247,10 +268,7 @@ namespace Backend
                                 continue;
                             }
 
-                            InsertTask(ref temporaryTimeLine, task, j - 1);
-
-                            task = temporaryTimeLine[j];
-                            temporaryTimeLine[j] = null;
+                            task = ReplaceTask(ref temporaryTimeLine, task, j - 1);
                             SearchLocationTask(ref timeLine, temporaryTimeLine, task);
                             break;
                         }
@@ -282,10 +300,7 @@ namespace Backend
                             continue;
                         }
 
-                        InsertTask(ref temporaryTimeLine, task, j);
-
-                        task = temporaryTimeLine[j + 1];
-                        temporaryTimeLine[j + 1] = null;
+                        task = ReplaceTask(ref temporaryTimeLine, task, j);
 
                         SearchLocationTask(ref timeLine, temporaryTimeLine, task);
                         break;
@@ -385,6 +400,39 @@ namespace Backend
                 }
             }
 
+            private static Task ReplaceTask(ref Task[] timeLine, Task task, int index) // Разбить функцию на под функцию
+            {
+                Task replaceTask = timeLine[index];
+
+                timeLine[index] = task;
+
+                return replaceTask;
+                /*bool offset = false;
+
+                if (task.enoughTime == true)
+                {
+                    Task[] temporaryTimeLine = CopyingArrayTasks(timeLine);
+
+                    for (int i = 0; i < timeLine.Length; i++)
+                    {
+                        if (i == index)
+                        {
+                            timeLine[i] = task;
+                            offset = true;
+                            continue;
+                        }
+
+                        if (offset == true)
+                        {
+                            timeLine[i] = temporaryTimeLine[i - 1];
+                            continue;
+                        }
+
+                        if ((i + 1 == timeLine.Length) || (timeLine[i] == null)) { break; }
+                    }
+                }*/
+            }
+
             public static Task[] CopyingArrayTasks(Task[] arrayTasks)
             {
                 Task[] newArrayTasks = new Task[arrayTasks.Length];
@@ -398,8 +446,11 @@ namespace Backend
                             arrayTasks[i].DataDeadline,
                             arrayTasks[i].Importance
                             );
+                        newArrayTasks[i].Beginning = arrayTasks[i].Beginning;
+                        newArrayTasks[i].Ending = arrayTasks[i].Ending;
                         newArrayTasks[i].IsEnoughTime = arrayTasks[i].IsEnoughTime;
                         newArrayTasks[i].IsFixed = arrayTasks[i].IsFixed;
+                        newArrayTasks[i].Id = arrayTasks[i].Id;
                     }
                 }
 
@@ -574,6 +625,12 @@ namespace Backend
                     {
                         listTasks[i].IsEnoughTime = false;
                         listTasks[i].Status = TaskStatus.Overdue;
+                    }
+                    else
+                    {
+                        listTasks[i].IsEnoughTime = true;
+                        listTasks[i].Status = TaskStatus.Relevant;
+
                     }
                 }
                 return listTasks;
