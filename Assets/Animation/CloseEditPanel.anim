@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ClosePanelParametersTask
+  m_Name: CloseEditPanel
   serializedVersion: 6
   m_Legacy: 1
   m_Compressed: 0
@@ -22,39 +22,57 @@ AnimationClip:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 66.965515
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 136
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      - serializedVersion: 3
-        time: 0.18333334
-        value: -150.20023
-        inSlope: -1489.8033
-        outSlope: -1489.8033
+        value: 0.099975586
+        inSlope: -74.67597
+        outSlope: -74.67597
         tangentMode: 0
         weightedMode: 0
         inWeight: 0.33333334
-        outWeight: 0.33333334
+        outWeight: 0.28887343
       - serializedVersion: 3
-        time: 0.5
-        value: -1942
-        inSlope: -7478.0195
-        outSlope: -7478.0195
+        time: 0.8333333
+        value: 1352
+        inSlope: 4232.0864
+        outSlope: 4232.0864
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.14122894
+        inWeight: 0.12886606
         outWeight: 0.33333334
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_AnchoredPosition.y
+    attribute: m_AnchoredPosition.x
     path: 
     classID: 224
     script: {fileID: 0}
-  m_PPtrCurves: []
+  m_PPtrCurves:
+  - curve:
+    - time: 0
+      value: {fileID: 0}
+    - time: 0.81666666
+      value: {fileID: 7400000, guid: 9f4cdcdc53058e64e9f9b08608e18316, type: 2}
+    attribute: openPanelEdit
+    path: 
+    classID: 114
+    script: {fileID: 11500000, guid: 32e2140f37f1c724dbacc94bf4cb8577, type: 3}
+  - curve:
+    - time: 0
+      value: {fileID: 0}
+    - time: 0.81666666
+      value: {fileID: 7400000}
+    attribute: closePanelEdit
+    path: 
+    classID: 114
+    script: {fileID: 11500000, guid: 32e2140f37f1c724dbacc94bf4cb8577, type: 3}
+  - curve:
+    - time: 0
+      value: {fileID: 0}
+    - time: 0.81666666
+      value: {fileID: 0}
+    attribute: panelEdit
+    path: 
+    classID: 114
+    script: {fileID: 11500000, guid: 32e2140f37f1c724dbacc94bf4cb8577, type: 3}
   m_SampleRate: 60
   m_WrapMode: 0
   m_Bounds:
@@ -68,7 +86,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.5
+    m_StopTime: 0.8333333
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -89,35 +107,26 @@ AnimationClip:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 66.965515
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 136
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      - serializedVersion: 3
-        time: 0.18333334
-        value: -150.20023
-        inSlope: -1489.8033
-        outSlope: -1489.8033
+        value: 0.099975586
+        inSlope: -74.67597
+        outSlope: -74.67597
         tangentMode: 0
         weightedMode: 0
         inWeight: 0.33333334
-        outWeight: 0.33333334
+        outWeight: 0.28887343
       - serializedVersion: 3
-        time: 0.5
-        value: -1942
-        inSlope: -7478.0195
-        outSlope: -7478.0195
+        time: 0.8333333
+        value: 1352
+        inSlope: 4232.0864
+        outSlope: 4232.0864
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.14122894
+        inWeight: 0.12886606
         outWeight: 0.33333334
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    attribute: m_AnchoredPosition.y
+    attribute: m_AnchoredPosition.x
     path: 
     classID: 224
     script: {fileID: 0}
@@ -125,8 +134,8 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 0.5
-    functionName: ClosePanelDatainput
+  - time: 0.81666666
+    functionName: ClosePanel
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

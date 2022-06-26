@@ -10,14 +10,15 @@ public class TaskSlides : MonoBehaviour
     bool taskFixed = false;
     public void slideControler()
     {
+        
         if (content.position.x > 0.9 || (taskFixed && content.position.x > 0.5))
         {
             content.position = new Vector3(1, content.position.y);
             taskFixed = true;
         }
-        if (content.position.x < -1.2 || (taskFixed && content.position.x < -1) )
+        if (content.position.x < -1.5 || (taskFixed && content.position.x < -2) )
         {
-            content.position = new Vector3(-2, content.position.y);
+            content.position = new Vector3(-2.5f, content.position.y);
             taskFixed = true;
         }
         

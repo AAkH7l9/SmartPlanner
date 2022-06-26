@@ -20,7 +20,7 @@ public class PresenterCalendar : MonoBehaviour
     string[] listMonth = new string[12] { "€нварь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сент€брь", "окт€брь", "но€брь", "декабрь" };
     string[] listMonthWithEnd = new string[12] { "€нвар€", "феврал€", "марта", "апрел€", "ма€", "июн€", "июл€", "августа", "сент€бр€", "окт€бр€", "но€бр€", "декабр€" };
     int submittedDay = 1;
-    DateTime selectedDate = DateTime.Now;
+    DateTime selectedDate = DateTime.Now.AddDays(-1);
     int submittedMonth = DateTime.Now.Month;
     int submittedYear = DateTime.Now.Year;
     int furstDayMonthOfWeek = (int)new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).DayOfWeek;
@@ -32,7 +32,6 @@ public class PresenterCalendar : MonoBehaviour
         taskManager = TaskManager.GetInstance();
         FillData();
         RefreshCalendar();
-        Debug.Log(submittedMonth);
     }
 
     private void FillData()
@@ -109,7 +108,7 @@ public class PresenterCalendar : MonoBehaviour
     private DayType WhatDayType(int numberDay)
     {
         DateTime day = new DateTime(submittedYear, submittedMonth, numberDay);
-        if (day < DateTime.Now)
+        if (day < DateTime.Now.AddDays(-1))
         {
             return DayType.Past;
         }
@@ -117,7 +116,7 @@ public class PresenterCalendar : MonoBehaviour
         {
             return DayType.Selected;
         }
-        if ((day >= DateTime.Now) && (day < selectedDate))
+        if ((day >= DateTime.Now.AddDays(-1)) && (day < selectedDate))
         {
             return DayType.Considered;
         }

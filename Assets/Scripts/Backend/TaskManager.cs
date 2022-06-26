@@ -58,6 +58,11 @@ namespace Backend
             PlayerPrefs.SetString("blockingtime", JsonConvert.SerializeObject(_blockingTime));
         }
 
+        public string[] GetBlockingTime()
+        {
+            return _blockingTime;
+        }
+
         public Task? GetTaskById(int id)
         {
             return _tasks.Find(task => task.Id == id);
@@ -85,8 +90,28 @@ namespace Backend
 
         public TimeSpan GetFreeTime(DateTime day)
         {
+            AddTask(new Task(null, 0, day, 10, true, false, TaskStatus.Relevant));
             UpdateTasks();
-            return MagicAlgorithm.FreeTime(_timeline, day);
+            TimeSpan freeTime = MagicAlgorithm.FreeTime(_timeline, day);
+            List<Task> relevantTasks = GetAllRelevantTasks();
+            for (int i = 0; i < relevantTasks.Count; i++)
+            {
+                if (relevantTasks[i].Name == null)
+                {
+                    DeleteTaskById(relevantTasks[i].Id);
+                }
+            }
+
+            List<Task> overdueTasks = GetAllOverdueTasks();
+            for (int i = 0; i < overdueTasks.Count; i++)
+            {
+                if (overdueTasks[i].Name == null)
+                {
+                    DeleteTaskById(overdueTasks[i].Id);
+                }
+            }
+
+            return freeTime;
         }
 
         public List<Task> GetAllRelevantTasks()
@@ -145,26 +170,34 @@ namespace Backend
 
         public void UpdateTasks()
         {
-            Task[] tasksArray = _tasks.ToArray();
+            Task[] tasksArray = _tasks.Where(task => (task.Status == TaskStatus.Relevant) || (task.Status == TaskStatus.Overdue)).ToArray();
+            Task[] unusedTasks = _tasks.Where(task => (task.Status == TaskStatus.Awaiting) || (task.Status == TaskStatus.Done)).ToArray();
             foreach (Task task in tasksArray)
             {
                 task.Beginning = task.DataDeadline.AddMinutes(-task.TimeInMinutes);
                 task.Ending = task.DataDeadline;
                 task.IsEnoughTime = true;
             }
-            MagicAlgorithm.RankingByImportance(ref tasksArray);
-            tasksArray = MagicAlgorithm.SortingTask(tasksArray);
-            _tasks = tasksArray.ToList();
-            string taskString = JsonConvert.SerializeObject(_tasks, Formatting.Indented);
-            PlayerPrefs.SetString("json", taskString);
+            if (tasksArray.Length > 0)
+            {
+                MagicAlgorithm.RankingByImportance(ref tasksArray);
+                tasksArray = MagicAlgorithm.SortingTask(tasksArray);
+  
+                for (int i = 0; i < tasksArray.Length; i++)
+                {
+                    _tasks[i] = tasksArray[i];
+                }
 
-            if (!PlayerPrefs.HasKey("overduecount")) PlayerPrefs.SetInt("overduecount", GetAllOverdueTasks().Count);
-            //File.WriteAllText("tasks.json", taskString);
+                for (int i = tasksArray.Length; i < _tasks.Count; i++)
+                {
+                    _tasks[i] = unusedTasks[i - tasksArray.Length];
+                }
+                string taskString = JsonConvert.SerializeObject(_tasks, Formatting.Indented);
+                PlayerPrefs.SetString("json", taskString);
+
+                if (!PlayerPrefs.HasKey("overduecount")) PlayerPrefs.SetInt("overduecount", GetAllOverdueTasks().Count);
+            }
         }
-
-
-
-
 
         //Основной алгоритм
         //Господи помилуй рефакторить этот код
@@ -173,7 +206,7 @@ namespace Backend
 
             public static Task[] SortingTask(Task[] listTasks)
             {
-                Task[] timeLine;
+               Task[] timeLine;
                 Task[] arrayBlockTime = DailyTimeLimit(GetInstance()._blockingTime);
                 timeLine = AddBlokingTime(arrayBlockTime, listTasks);
 
@@ -200,7 +233,7 @@ namespace Backend
             {
                 Task[] timeLine = new Task[listTasks.Length + LengthTimeLIne(listTasks)+ 1];
 
-                for (int i = 0; i < LengthTimeLIne(listTasks) + 1; i++)
+                for (int i = 0; i < LengthTimeLIne(listTasks) + 2; i++)
                 {
                     timeLine[i] = new Task();
                     timeLine[i].DataDeadline = blockTime[(i + 6) % 7].DataDeadline;
@@ -218,6 +251,7 @@ namespace Backend
 
             private static void OffsetTask(ref Task[] listTasks, ref Task[] timeLine) // переписать название функции
             {
+                RankingByImportance(ref listTasks);
                 for (int i = 0; i < listTasks.Length; i++)
                 {
                     Task[] temporaryTimeLine = CopyingArrayTasks(timeLine);
@@ -257,10 +291,19 @@ namespace Backend
 
                             if (temporaryTimeLine[j - 1].IsFixed)
                             {
-                                ShiftLocationTask(ref task, ref temporaryTimeLine[j - 1]);
-                                SearchLocationTask(ref timeLine, temporaryTimeLine, task);
-                                break;
+                                if (task.IsFixed)
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    ShiftLocationTask(ref task, ref temporaryTimeLine[j - 1]);
+                                    SearchLocationTask(ref timeLine, temporaryTimeLine, task);
+                                    break;
+                                }
+                                
                             }
+
 
                             ShiftLocationTask(ref temporaryTimeLine[j - 1], ref task);
                             if (NotEnoughTimeQuestion(ref temporaryTimeLine[j - 1]))
@@ -273,9 +316,16 @@ namespace Backend
                             break;
                         }
 
-                        ShiftLocationTask(ref task, ref temporaryTimeLine[j]);
-                        SearchLocationTask(ref timeLine, temporaryTimeLine, task);
-                        break;
+                        if (task.IsFixed)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            ShiftLocationTask(ref task, ref temporaryTimeLine[j]);
+                            SearchLocationTask(ref timeLine, temporaryTimeLine, task);
+                            break;
+                        }
                     }
 
                     if (ItLastTask(temporaryTimeLine, j + 1))
@@ -286,12 +336,21 @@ namespace Backend
                             InsertTask(ref timeLine, task, j + 1);
                             break;
                         }
+                        
 
                         if (temporaryTimeLine[j].IsFixed)
                         {
-                            ShiftLocationTask(ref task, ref temporaryTimeLine[j]);
-                            SearchLocationTask(ref timeLine, temporaryTimeLine, task);
-                            break;
+                            if (task.IsFixed)
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                ShiftLocationTask(ref task, ref temporaryTimeLine[j]);
+                                SearchLocationTask(ref timeLine, temporaryTimeLine, task);
+                                break;
+                            }
+                            
                         }
 
                         ShiftLocationTask(ref temporaryTimeLine[j], ref task);
@@ -350,15 +409,6 @@ namespace Backend
                 {
                     return true;
                 }
-
-                if (task.Ending == (task2?.Ending ?? DateTime.Now))
-                {
-                    if ((task.Importance >= (task2?.Importance ?? task.Importance + 1)))
-                    {
-                        return true;
-                    }
-                }
-
                 return false;
             }
 
@@ -400,37 +450,13 @@ namespace Backend
                 }
             }
 
-            private static Task ReplaceTask(ref Task[] timeLine, Task task, int index) // Разбить функцию на под функцию
+            private static Task ReplaceTask(ref Task[] timeLine, Task task, int index) 
             {
                 Task replaceTask = timeLine[index];
 
                 timeLine[index] = task;
 
                 return replaceTask;
-                /*bool offset = false;
-
-                if (task.enoughTime == true)
-                {
-                    Task[] temporaryTimeLine = CopyingArrayTasks(timeLine);
-
-                    for (int i = 0; i < timeLine.Length; i++)
-                    {
-                        if (i == index)
-                        {
-                            timeLine[i] = task;
-                            offset = true;
-                            continue;
-                        }
-
-                        if (offset == true)
-                        {
-                            timeLine[i] = temporaryTimeLine[i - 1];
-                            continue;
-                        }
-
-                        if ((i + 1 == timeLine.Length) || (timeLine[i] == null)) { break; }
-                    }
-                }*/
             }
 
             public static Task[] CopyingArrayTasks(Task[] arrayTasks)
@@ -640,7 +666,11 @@ namespace Backend
             {
                 TimeSpan freeTime;
                 int i = 0;
-
+                if(day < DateTime.Now.AddDays(-1))
+                {
+                    freeTime = DateTime.Now - DateTime.Now;
+                    return freeTime;
+                }
                 while (timeLine[i].Beginning < DateTime.Now)
                 {
                     i++;

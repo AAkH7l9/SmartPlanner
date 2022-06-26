@@ -18,19 +18,19 @@ namespace Backend
         public Task() { }
 
         public Task(string name,
-            int timeInMinutes,
-            DateTime dataDeadline,
-            int importance,
+            int timeInMinutes = 0,
+            DateTime? dataDeadline = null,
+            int importance = -1,
             bool isEnoughTime = true,
             bool isFixed = false,
             TaskStatus status = TaskStatus.Relevant)
         {
             Name = name;
             TimeInMinutes = timeInMinutes;
-            DataDeadline = dataDeadline;
+            DataDeadline = dataDeadline ?? DateTime.MinValue;
             Importance = importance;
-            Beginning = dataDeadline.AddMinutes(-timeInMinutes);
-            Ending = dataDeadline;
+            Beginning = dataDeadline.Value.AddMinutes(-timeInMinutes);
+            Ending = dataDeadline.Value;
             IsEnoughTime = isEnoughTime;
             IsFixed = isFixed;
             Status = status;

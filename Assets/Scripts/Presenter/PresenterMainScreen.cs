@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 using UnityEngine.Animations;
 using Newtonsoft.Json;
 
@@ -33,13 +34,23 @@ public class PresenterMainScreen : MonoBehaviour
 
     public void PrintTasks(Task[] listTasks)
     {
-        ClearListTasks();
-        for (int i = 0; i < listTasks.Length; i++)
+        var orderedList = from task in listTasks
+                          orderby task.Beginning
+                          select task;
+
+        int i = 0;
+        foreach (Task task in orderedList)
         {
-            StartCoroutine(GetItems(results => OnRecievedItem(results, listTasks[i]), listTasks[i]));
+            listTasks[i] = task;
+            i++;
+        }
+
+        ClearListTasks();
+        for (int j = 0; j < listTasks.Length; j++)
+        {
+            StartCoroutine(GetItems(results => OnRecievedItem(results, listTasks[j]), listTasks[j]));
         }
     }
-
 
     private bool refresh = false;
     public void RefreshList()
@@ -162,8 +173,11 @@ public class PresenterMainScreen : MonoBehaviour
     [SerializeField] private AnimationClip animClosePanelEditTask;
     private bool click = false; 
 
+    
+
     public void PaneOpeningRegulation()
     {
+        
         if (!click)
         {
             contentDatainput.SetActive(true);
@@ -176,11 +190,12 @@ public class PresenterMainScreen : MonoBehaviour
         }
         else
         {
+            ClearFormTask();
             animPanelAddTask.clip = animClosePanelEditTask;
             animButtonAddTask.clip = animClosePanel;
             animButtonAddTask.Play();
             animPanelAddTask.Play();
-            contentDatainput.SetActive(false);
+            
             click = false;
         }
     }
@@ -203,88 +218,357 @@ public class PresenterMainScreen : MonoBehaviour
     public GameObject prefabTask;
     public RectTransform contentListTask;
 
-    public void AddTask()
+    [Header("Кнопки на задачах")]
+    [SerializeField] private Sprite buttonActive;
+    [SerializeField] private Sprite buttonWaiting;
+    [SerializeField] private Sprite buttonDelete;
+    [SerializeField] private Sprite buttonCompleted;
+
+    public void AddTaskView()
+    {
+        AddTask();
+    }
+    private bool AddTask()
     {
         if (textButtonCreateTask.text == "Сохранить изменения")
         {
             Task task = taskManager.GetTaskById(int.Parse(id.text));
-            if (CorrectnessDateTask())
+            if (waiting.isOn)
             {
-                string dateString = dataDeadlineTask.text;
-                string timeString = timeDeadlineTask.text;
-
-                Debug.Log(dateString);
-                Debug.Log(timeString);
-                DateTime deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
-                
-                TaskStatus statusTask = TaskStatus.Relevant;
-                if (waiting.isOn)
+                if (CorrectnessDateTaskAwaiting())
                 {
-                    statusTask = TaskStatus.Awaiting;
+                    DateTime deadLine;
+                    string dateString;
+                    string timeString;
+                    if (timeDeadlineTask.text == "")
+                    {
+                        timeString = "00:00";
+                    }
+                    else
+                    {
+                        timeString = timeDeadlineTask.text;
+                    }
+                    if (dataDeadlineTask.text == "")
+                    {
+                        deadLine = DateTime.MinValue;
+                    }
+                    else
+                    {
+                        dateString = dataDeadlineTask.text;
+                        deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
+                    }
+
+
+
+
+                    TaskStatus statusTask = TaskStatus.Awaiting;
+
+                    task.Name = nameTask.text;
+
+                    if (timeExecutionTask.text == "")
+                    {
+                        task.TimeInMinutes = 0;
+                    }
+                    else
+                    {
+                        task.TimeInMinutes = int.Parse(timeExecutionTask.text);
+                    }
+
+                    deadLine = deadLine.AddMinutes( task.TimeInMinutes);
+
+                    if (fixedTask.isOn)
+                    {
+                        task.DataDeadline = deadLine.AddMinutes(task.TimeInMinutes);
+                    }
+                    else
+                    {
+                        task.DataDeadline = deadLine;
+                    }
+
+                    if (timeImportance.text == "")
+                    {
+                        task.Importance = -1;
+                    }
+                    else
+                    {
+                        task.Importance = int.Parse(timeImportance.text);
+                    }
+                    
+                    task.IsEnoughTime = true;
+                    task.IsFixed = fixedTask.isOn;
+                    task.Status = statusTask;
+
+
+                    taskManager.EditTask(task);
+                    RefreshListButton();
+                    PaneOpeningRegulation();
+                    ClearFormTask();
+                    return true;
                 }
-
-                task.Name = nameTask.text;
-                task.TimeInMinutes = int.Parse(timeExecutionTask.text);
-                task.DataDeadline = deadLine;
-                task.Importance = int.Parse(timeImportance.text);
-                task.IsEnoughTime = true;
-                task.IsFixed = fixedTask.isOn;
-                task.Status = statusTask;
-
-
-                taskManager.EditTask(task);
             }
+            else
+            {
+                if (CorrectnessDateTask())
+                {
+                    string dateString = dataDeadlineTask.text;
+                    string timeString = timeDeadlineTask.text;
 
-            
+                    DateTime deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
 
+                    TaskStatus statusTask = TaskStatus.Relevant;
+                    if (waiting.isOn)
+                    {
+                        statusTask = TaskStatus.Awaiting;
+                    }
+
+                    task.Name = nameTask.text;
+                    task.TimeInMinutes = int.Parse(timeExecutionTask.text);
+                    if (fixedTask.isOn)
+                    {
+                        task.DataDeadline = deadLine.AddMinutes(int.Parse(timeExecutionTask.text));
+                    }
+                    else
+                    {
+                        task.DataDeadline = deadLine;
+                    }
+
+                    task.Importance = int.Parse(timeImportance.text);
+                    task.IsEnoughTime = true;
+                    task.IsFixed = fixedTask.isOn;
+                    task.Status = statusTask;
+
+
+                    taskManager.EditTask(task);
+                    RefreshListButton();
+                    PaneOpeningRegulation();
+                    ClearFormTask();
+                    return true;
+                }
+            }
         }
         else
         {
-            if (CorrectnessDateTask())
+            if (waiting.isOn)
             {
-                string dateString = dataDeadlineTask.text;
-                string timeString = timeDeadlineTask.text;
-                Debug.Log(dateString);
-                Debug.Log(timeString);
-
-                DateTime deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
-
-                TaskStatus statusTask = TaskStatus.Relevant;
-                if (waiting.isOn)
+                TaskStatus statusTask = TaskStatus.Awaiting;
+                if (CorrectnessDateTaskAwaiting())
                 {
-                    statusTask = TaskStatus.Awaiting;
+                    DateTime deadLine;
+                    string dateString;
+                    string timeString;
+                    if (timeDeadlineTask.text == "")
+                    {
+                        timeString = "00:00";
+                    }
+                    else
+                    {
+                        timeString = timeDeadlineTask.text;
+                    }
+                    if (dataDeadlineTask.text == "")
+                    {
+                        deadLine = DateTime.MinValue;
+                    }
+                    else
+                    {
+                        dateString = dataDeadlineTask.text;
+                        deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
+                    }
+
+                    string timeExecuton;
+
+                    if (timeExecutionTask.text == "")
+                    {
+                        timeExecuton = "0";
+                    }
+                    else
+                    {
+                        timeExecuton = timeExecutionTask.text;
+                    }
+
+                    deadLine = deadLine.AddMinutes(int.Parse(timeExecuton));
+
+                    string importanceTask;
+
+                    if (timeImportance.text == "")
+                    {
+                        importanceTask = "-1";
+                    }
+                    else
+                    {
+                        importanceTask = timeImportance.text;
+                    }
+
+                    Task task = new Task(
+                        nameTask.text,
+                        int.Parse(timeExecuton),
+                        deadLine,
+                        int.Parse(importanceTask),
+                        isEnoughTime: true,
+                        fixedTask.isOn,
+                        statusTask
+                        );
+
+                    if (fixedTask.isOn)
+                    {
+                        task.DataDeadline = deadLine.AddMinutes(int.Parse(timeExecutionTask.text));
+                    }
+                    else
+                    {
+                        task.DataDeadline = deadLine;
+                    }
+
+                    taskManager.AddTask(task);
+
+                    RefreshListButton();
+                    PaneOpeningRegulation();
+                    ClearFormTask();
+                    return true;
                 }
-                Task task = new Task(
-                    nameTask.text,
-                    int.Parse(timeExecutionTask.text),
-                    deadLine,
-                    int.Parse(timeImportance.text),
-                    isEnoughTime: true,
-                    fixedTask.isOn,
-                    statusTask
-                    );
-                taskManager.AddTask(task);
             }
+            else {
+                if (CorrectnessDateTask())
+                {
+                    string dateString = dataDeadlineTask.text;
+                    string timeString = timeDeadlineTask.text;
+
+                    DateTime deadLine = DateTime.ParseExact(dateString + " " + timeString, "dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture);
+
+                    TaskStatus statusTask = TaskStatus.Relevant;
+
+                    deadLine = deadLine.AddMinutes(int.Parse(timeExecutionTask.text));
+
+                    Task task = new Task(
+                        nameTask.text,
+                        int.Parse(timeExecutionTask.text),
+                        deadLine,
+                        int.Parse(timeImportance.text),
+                        isEnoughTime: true,
+                        fixedTask.isOn,
+                        statusTask
+                        );
+                    taskManager.AddTask(task);
+                    RefreshListButton();
+                    PaneOpeningRegulation();
+                    ClearFormTask();
+                    return true;
+                }
+            }
+            
         }
-        RefreshListButton();
+        return false;
+       
     }
 
     private bool CorrectnessDateTask()
     {
-        /*bool correctData = true;
-        Regex regex = new Regex(@"\d");
-        Debug.Log("Работает");
+        bool correctData = true;
+        if(!Regex.Match(dataDeadlineTask.text, @"\d{2}\.\d{2}\.\d{4}").Success)
+        {
+            dataDeadlineTask.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            dataDeadlineTask.image.color = Color.white;
+        }
+
+        if (!Regex.Match(timeDeadlineTask.text, @"\d{2}:\d{2}").Success)
+        {
+            timeDeadlineTask.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            dataDeadlineTask.image.color = Color.white;
+        }
+
         if (nameTask.text == "")
         {
+            nameTask.image.color = Color.red;
             correctData = false;
-            //Добавить изменения цвета у названия задачи
         }
-        if( regex.IsMatch(timeDeadlineTask.text))
+        else
         {
-            Debug.Log("Работает аывваывыа");
+            nameTask.image.color = Color.white;
         }
-        return correctData;*/
-        return true;
+
+        if (!Regex.Match(timeExecutionTask.text, @"[1-9]\d*").Success)
+        {
+            timeExecutionTask.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            timeExecutionTask.image.color = Color.white;
+        }
+
+        if (!Regex.Match(timeImportance.text, @"^([1-9]|10)$").Success)
+        {
+            timeImportance.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            timeImportance.image.color = Color.white;
+        }
+
+        return correctData;
+    }
+
+    private bool CorrectnessDateTaskAwaiting()
+    {
+        bool correctData = true;
+        if (!Regex.Match(dataDeadlineTask.text, @"(\d{2}\.\d{2}\.\d{4})?").Success)
+        {
+            dataDeadlineTask.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            dataDeadlineTask.image.color = Color.white;
+        }
+
+        if (!Regex.Match(timeDeadlineTask.text, @"(\d{2}:\d{2})?").Success)
+        {
+            timeDeadlineTask.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            timeDeadlineTask.image.color = Color.white;
+        }
+
+        if (nameTask.text == "")
+        {
+            nameTask.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            nameTask.image.color = Color.white;
+        }
+
+        if (!Regex.Match(timeExecutionTask.text, @"([1-9]\d*)?").Success)
+        {
+            timeExecutionTask.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            timeExecutionTask.image.color = Color.white;
+        }
+
+        if (!Regex.Match(timeImportance.text, @"(^[1-9]$|^10$)?").Success)
+        {
+            timeImportance.image.color = Color.red;
+            correctData = false;
+        }
+        else
+        {
+            timeImportance.image.color = Color.white;
+        }
+
+        return correctData;
     }
 
     public void ClearFormTask()
@@ -297,27 +581,37 @@ public class PresenterMainScreen : MonoBehaviour
         fixedTask.isOn = false;
         waiting.isOn = false;
         textButtonCreateTask.text = "Создать задачу";
+
+        dataDeadlineTask.image.color = Color.white;
+        timeDeadlineTask.image.color = Color.white;
+        nameTask.image.color = Color.white;
+        timeExecutionTask.image.color = Color.white;
+        timeImportance.image.color = Color.white;
     }
 
     private void FillDateFormTask(Task task)
     {
+        DateTime deadline = task.DataDeadline;
+        if (task.IsFixed)
+        {
+            deadline = task.DataDeadline.AddMinutes(-task.TimeInMinutes);
+        }
         nameTask.text = task.Name;
-        if (task.DataDeadline.Minute.ToString().Length == 1)
+        if (deadline.Minute.ToString().Length == 1)
         {
-            timeDeadlineTask.text = task.DataDeadline.Hour.ToString() + ":0" + task.DataDeadline.Minute.ToString();
+            timeDeadlineTask.text = deadline.Hour.ToString() + ":0" + deadline.Minute.ToString();
         }
         else
         {
-            timeDeadlineTask.text = task.DataDeadline.Hour.ToString() + ":" + task.DataDeadline.Minute.ToString();
+            timeDeadlineTask.text = deadline.Hour.ToString() + ":" + deadline.Minute.ToString();
         }
-        Debug.Log(task.DataDeadline.Month.ToString());
-        if (task.DataDeadline.Month.ToString().Length == 1)
+        if (deadline.Month.ToString().Length == 1)
         {
-            dataDeadlineTask.text = task.DataDeadline.Day.ToString() + ".0" + task.DataDeadline.Month.ToString() + "." + task.DataDeadline.Year.ToString();
+            dataDeadlineTask.text = deadline.Day.ToString() + ".0" + deadline.Month.ToString() + "." + deadline.Year.ToString();
         }
         else
         {
-            dataDeadlineTask.text = task.DataDeadline.Day.ToString() + "." + task.DataDeadline.Month.ToString() + "." + task.DataDeadline.Year.ToString();
+            dataDeadlineTask.text = deadline.Day.ToString() + "." + deadline.Month.ToString() + "." + deadline.Year.ToString();
         }
 
 
@@ -358,20 +652,33 @@ public class PresenterMainScreen : MonoBehaviour
         Animation animDestroy = viewGameObject.GetComponent<Animation>();
         Sprite usingSpriteTask = imageActive;
         
+        if (task.IsFixed)
+        {
+            viewGameObject.transform.Find("View").Find("Content").Find("deadlineText").GetComponent<Text>().text = "Необходимо начать в";
+        }
+
         switch (status)
         {
             case TaskStatus.Relevant:
+                viewGameObject.transform.Find("View").Find("Content").Find("ButtonCompleted").GetComponent<Image>().sprite = buttonCompleted;
                 usingSpriteTask = imageActive;
                 break;
             case TaskStatus.Awaiting:
+                viewGameObject.transform.Find("View").Find("Content").Find("ButtonWaiting").GetComponent<Image>().sprite = buttonActive;
                 usingSpriteTask = imageWaiting;
                 break;
             case TaskStatus.Overdue:
                 usingSpriteTask = imageOveride;
                 viewGameObject.transform.Find("View").Find("Content").Find("deadlineText").GetComponent<Text>().text = "Надо было начать до";
+                if (task.IsFixed)
+                {
+                    viewGameObject.transform.Find("View").Find("Content").Find("deadlineText").GetComponent<Text>().text = "Надо было начать в";
+                }
                 OnClickNotification();
                 break;
             case TaskStatus.Done:
+                viewGameObject.transform.Find("View").Find("Content").Find("ButtonCompleted").GetComponent<Image>().sprite = buttonActive;
+                
                 usingSpriteTask = imageCompleted;
                 break;
             default:
@@ -401,11 +708,11 @@ public class PresenterMainScreen : MonoBehaviour
         {
             if (status == TaskStatus.Done)
             {
-                taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Done);
+                taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Relevant);
             }
             else
             {
-                taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Relevant);
+                taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Done);
             }
             animDestroy.Play();
         });
@@ -419,11 +726,27 @@ public class PresenterMainScreen : MonoBehaviour
 
         view.buttonWaiting.onClick.AddListener(() =>
         {
-            if (status == TaskStatus.Awaiting) { }
+            if (status == TaskStatus.Awaiting) {
+                Task task = taskManager.GetTaskById(int.Parse(view.id.text));
+                task.Status = TaskStatus.Relevant;
+                FillDateFormTask(task);
+                PaneOpeningRegulation();
+                if (AddTask())
+                {
+                    contentDatainput.SetActive(false);
+                    animDestroy.Play();
+                }
+                else
+                {
+                    taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Awaiting);
+                }
+                
+            }
             else {
                 taskManager.SetTaskStatusById(int.Parse(view.id.text), TaskStatus.Awaiting);
                 animDestroy.Play();
             }
+            
         });
     }
 
@@ -433,9 +756,34 @@ public class PresenterMainScreen : MonoBehaviour
     {
         var results = new ItemListModel();
         results.title = task.Name;
-        results.deadline = task.Beginning.ToString();
-        results.timeExecution = task.TimeInMinutes.ToString();
-        results.importance = task.Importance.ToString();
+        if(task.Beginning == DateTime.MinValue)
+        {
+            results.deadline = "";
+        }
+        else
+        {
+            results.deadline = task.Beginning.ToString();
+        }
+        
+        if(task.TimeInMinutes == 0)
+        {
+            results.timeExecution = "";
+        }
+        else
+        {
+            results.timeExecution = task.TimeInMinutes.ToString();
+        }
+
+        if(task.Importance == -1)
+        {
+            results.importance = "";
+        }
+        else
+        {
+            results.importance = task.Importance.ToString();
+        }
+        
+        
         results.id = task.Id.ToString();
 
         callback(results);
